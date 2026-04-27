@@ -90,17 +90,39 @@ public class RepartidorAgent extends Agent {
 
                         // Completar entrega
                         if (elapsedTime >= delivery.estimatedTime) {
+                        
                             delivery.status = "ENTREGADO";
-
+                        
                             ACLMessage delivered = new ACLMessage(ACLMessage.INFORM);
                             delivered.setConversationId(deliveryId);
-                            delivered.setContent("Entregado a " + delivery.customerID + ": " + delivery.item);
+                            delivered.setContent(
+                                "Entregado a "
+                                + delivery.customerID
+                                + ": "
+                                + delivery.item
+                            );
+                        
                             delivered.addReceiver(gestorAgent);
-                            delivered.addReceiver(new jade.core.AID(delivery.customerID, false));
+                        
+                            delivered.addReceiver(
+                                new jade.core.AID(
+                                    delivery.customerID,
+                                    false
+                                )
+                            );
+                        
                             send(delivered);
-
-                            System.out.println("✅ " + getLocalName() + " - Entregado a " + delivery.customerID + ": "
-                                    + delivery.item);
+                        
+                            System.out.println(
+                                "✅ "
+                                + getLocalName()
+                                + " - Entregado a "
+                                + delivery.customerID
+                                + ": "
+                                + delivery.item
+                            );
+                        
+                            it.remove();
                         }
                     }
                 }

@@ -19,5 +19,6 @@ Antes de ejecutar el proyecto, asegúrese de tener instalado lo siguiente:
 Se espera que salga "BUILD SUCCESS" para que genere los archivos en la carpeta target/classes
 
 ## 3. Ejecución del sistema multi-agente
-Para iniciar la plataforma JADE y los agentes, ejecutar en la terminal:
-java -cp "lib/jade.jar;target/classes" jade.Boot -gui "Cliente:agents.ClienteAgent;Gestor:agents.GestorAgent;Restaurante:agents.RestauranteAgent;Repartidor:agents.RepartidorAgent"
+Para iniciar la plataforma JADE y los agentes, hacer la siguiente ejecución en 2 terminales:
+- Terminal 1: java -cp "lib/jade.jar;target/classes" jade.Boot -gui -name FoodPlatform "Gestor:agents.GestorAgent;Restaurante:agents.RestauranteAgent"
+- Terminal 2: java -cp "lib/jade.jar;target/classes" jade.Boot -container -host localhost "Cliente:agents.ClienteAgent;Repartidor:agents.RepartidorAgent"

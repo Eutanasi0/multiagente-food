@@ -23,39 +23,81 @@ public class ClienteAgent extends Agent {
         orderID = getLocalName() + "_" + System.currentTimeMillis();
 
         // Comportamiento para hacer pedido
-        addBehaviour(new OneShotBehaviour() {
+        addBehaviour(new jade.core.behaviours.TickerBehaviour(this, 10000) {
+        
             @Override
-            public void action() {
+            protected void onTick() {
+            
                 try {
-                    DFAgentDescription template = new DFAgentDescription();
-                    ServiceDescription sd = new ServiceDescription();
+                
+                    // Generar nuevo ID de orden
+                    orderID = getLocalName() + "_" + System.currentTimeMillis();
+
+                    DFAgentDescription template =
+                            new DFAgentDescription();
+
+                    ServiceDescription sd =
+                            new ServiceDescription();
+
                     sd.setType("gestor");
+
                     template.addServices(sd);
 
-                    DFAgentDescription[] result = DFService.search(myAgent, template);
+                    DFAgentDescription[] result =
+                            DFService.search(myAgent, template);
 
                     if (result.length > 0) {
-                        String selectedItem = menuItems[(int) (Math.random() * menuItems.length)];
+                    
+                        String selectedItem =
+                                menuItems[
+                                        (int) (Math.random()
+                                        * menuItems.length)
+                                ];
 
-                        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                        msg.addReceiver(result[0].getName());
-                        msg.setConversationId(orderID);
-                        msg.setContent(selectedItem);
-                        msg.setReplyWith("pedido-" + System.currentTimeMillis());
+                        ACLMessage msg =
+                                new ACLMessage(
+                                        ACLMessage.REQUEST
+                                );
+
+                        msg.addReceiver(
+                                result[0].getName()
+                        );
+
+                        msg.setConversationId(
+                                orderID
+                        );
+
+                        msg.setContent(
+                                selectedItem
+                        );
 
                         send(msg);
 
                         System.out.println(
-                                "📱 " + getLocalName() + " solicitó: " + selectedItem + " (Order ID: " + orderID + ")");
-                        orderStatus.put(orderID, "PEDIDO_ENVIADO");
+                                "\n🆕 "
+                                + getLocalName()
+                                + " realizó un nuevo pedido: "
+                                + selectedItem
+                                + " (Order ID: "
+                                + orderID
+                                + ")"
+                        );
 
-                    } else {
-                        System.out.println("❌ " + getLocalName() + " - No se encontró gestor");
+                        orderStatus.put(
+                                orderID,
+                                "PEDIDO_ENVIADO"
+                        );
+
                     }
-                } catch (FIPAException e) {
+
+                } catch (Exception e) {
+                
                     e.printStackTrace();
+
                 }
+
             }
+
         });
 
         // Comportamiento para escuchar respuestas

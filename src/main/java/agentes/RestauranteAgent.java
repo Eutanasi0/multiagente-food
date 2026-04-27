@@ -16,6 +16,7 @@ public class RestauranteAgent extends Agent {
     private String restaurantName;
     private int basePrice = 15;
     private int avgPrepTime = 20;
+    private jade.core.AID gestorAgent;
 
     private class OrderData {
         public String item;
@@ -34,6 +35,7 @@ public class RestauranteAgent extends Agent {
         System.out.println("\n🍽️  " + restaurantName + " - Restaurante abierto y listo para recibir órdenes!");
 
         registrarServicio();
+        buscarGestor();
 
         addBehaviour(new CyclicBehaviour() {
             @Override
@@ -82,7 +84,7 @@ public class RestauranteAgent extends Agent {
                             inform.setConversationId(orderId);
                             inform.setContent(order.item + " listo para entregar");
                             // Enviar al gestor
-                            inform.addReceiver(new jade.core.AID("Gestor", false));
+                            inform.addReceiver(gestorAgent);
                             send(inform);
 
                             System.out.println("🔔 " + restaurantName + " - " + order.item + " está LISTO!");
@@ -129,7 +131,7 @@ public class RestauranteAgent extends Agent {
             ACLMessage confirm = new ACLMessage(ACLMessage.CONFIRM);
             confirm.setConversationId(conversationId);
             confirm.setContent("Preparando " + order.item);
-            confirm.addReceiver(new jade.core.AID("Gestor", false));
+            confirm.addReceiver(gestorAgent);
             send(confirm);
         }
     }
@@ -158,6 +160,45 @@ public class RestauranteAgent extends Agent {
 
         } catch (FIPAException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void buscarGestor() {
+
+        try {
+
+            DFAgentDescription template =
+                new DFAgentDescription();
+
+            ServiceDescription sd =
+                new ServiceDescription();
+
+            sd.setType("gestor");
+
+            template.addServices(sd);
+
+            DFAgentDescription[] result =
+                DFService.search(
+                    this,
+                    template
+                );
+
+            if (result.length > 0) {
+
+                gestorAgent =
+                    result[0].getName();
+
+                System.out.println(
+                    "✅ Gestor encontrado: "
+                    + gestorAgent
+                        .getLocalName()
+                );
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
         }
     }
 }

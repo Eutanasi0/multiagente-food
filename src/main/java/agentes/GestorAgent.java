@@ -123,27 +123,72 @@ public class GestorAgent extends Agent {
         }
     }
 
-    private void handleRestaurantProposal(ACLMessage msg, String conversationId) {
+    private void handleRestaurantProposal(
+            ACLMessage msg,
+            String conversationId) {
+
         OrderData order = orders.get(conversationId);
 
         if (order != null) {
-            // Seleccionar el restaurante con mejor propuesta
+
             String content = msg.getContent();
+
             System.out.println(
-                    "💵 " + getLocalName() + " - Presupuesto de " + msg.getSender().getLocalName() + ": " + content);
+                "💵 " + getLocalName()
+                + " - Presupuesto de "
+                + msg.getSender().getLocalName()
+                + ": " + content
+            );
+
+            double price = extractPrice(content);
+
+            if (order.selectedRestaurant == null
+                || price < order.price) {
+
+                order.selectedRestaurant =
+                    msg.getSender();
+
+                order.price = price;
+
+                System.out.println(
+                    "🏆 " + getLocalName()
+                    + " seleccionó "
+                    + msg.getSender()
+                        .getLocalName()
+                    + " con precio "
+                    + price
+                );
+            }
 
             if (order.status.equals("INICIAL")) {
-                order.selectedRestaurant = msg.getSender();
-                order.status = "RESTAURANTE_SELECCIONADO";
 
-                // Informar cliente con propuesta
-                ACLMessage propose = new ACLMessage(ACLMessage.PROPOSE);
-                propose.addReceiver(new jade.core.AID(order.customerID, false));
-                propose.setConversationId(conversationId);
+                order.status =
+                    "RESTAURANTE_SELECCIONADO";
+
+                ACLMessage propose =
+                    new ACLMessage(
+                        ACLMessage.PROPOSE
+                    );
+
+                propose.addReceiver(
+                    new jade.core.AID(
+                        order.customerID,
+                        false
+                    )
+                );
+
+                propose.setConversationId(
+                    conversationId
+                );
+
                 propose.setContent(content);
+
                 send(propose);
 
-                System.out.println("💬 " + getLocalName() + " - Enviando propuesta al cliente");
+                System.out.println(
+                    "💬 Propuesta enviada "
+                    + "al cliente"
+                );
             }
         }
     }
@@ -203,6 +248,28 @@ public class GestorAgent extends Agent {
             }
         } catch (FIPAException e) {
             e.printStackTrace();
+        }
+    }
+
+    private double extractPrice(String content) {
+        try {
+            String pricePart =
+                content.split("\\|")[0];
+
+            pricePart =
+                pricePart.replace(
+                    "Precio: $",
+                    ""
+                );
+
+            return Double.parseDouble(
+                pricePart.trim()
+            );
+
+        } catch (Exception e) {
+
+            return 9999;
+
         }
     }
 }

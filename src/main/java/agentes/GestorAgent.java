@@ -1,4 +1,4 @@
-package agents;
+package agentes;
 
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -76,6 +76,10 @@ public class GestorAgent extends Agent {
                     } else if (msg.getPerformative() == ACLMessage.INFORM) {
                         // Informes de estado
                         handleStatusUpdate(msg, conversationId);
+
+                    } else if (msg.getPerformative() == ACLMessage.CONFIRM) {
+                        // Confirmación del restaurante (preparando)
+                        handleRestaurantConfirmation(msg, conversationId);
                     }
                 } else {
                     block();
@@ -134,61 +138,51 @@ public class GestorAgent extends Agent {
             String content = msg.getContent();
 
             System.out.println(
-                "💵 " + getLocalName()
-                + " - Presupuesto de "
-                + msg.getSender().getLocalName()
-                + ": " + content
-            );
+                    "💵 " + getLocalName()
+                            + " - Presupuesto de "
+                            + msg.getSender().getLocalName()
+                            + ": " + content);
 
             double price = extractPrice(content);
 
             if (order.selectedRestaurant == null
-                || price < order.price) {
+                    || price < order.price) {
 
-                order.selectedRestaurant =
-                    msg.getSender();
+                order.selectedRestaurant = msg.getSender();
 
                 order.price = price;
 
                 System.out.println(
-                    "🏆 " + getLocalName()
-                    + " seleccionó "
-                    + msg.getSender()
-                        .getLocalName()
-                    + " con precio "
-                    + price
-                );
+                        "🏆 " + getLocalName()
+                                + " seleccionó "
+                                + msg.getSender()
+                                        .getLocalName()
+                                + " con precio "
+                                + price);
             }
 
             if (order.status.equals("INICIAL")) {
 
-                order.status =
-                    "RESTAURANTE_SELECCIONADO";
+                order.status = "RESTAURANTE_SELECCIONADO";
 
-                ACLMessage propose =
-                    new ACLMessage(
-                        ACLMessage.PROPOSE
-                    );
+                ACLMessage propose = new ACLMessage(
+                        ACLMessage.PROPOSE);
 
                 propose.addReceiver(
-                    new jade.core.AID(
-                        order.customerID,
-                        false
-                    )
-                );
+                        new jade.core.AID(
+                                order.customerID,
+                                false));
 
                 propose.setConversationId(
-                    conversationId
-                );
+                        conversationId);
 
                 propose.setContent(content);
 
                 send(propose);
 
                 System.out.println(
-                    "💬 Propuesta enviada "
-                    + "al cliente"
-                );
+                        "💬 Propuesta enviada "
+                                + "al cliente");
             }
         }
     }
@@ -220,6 +214,11 @@ public class GestorAgent extends Agent {
             if (content.contains("listo")) {
                 order.status = "LISTO_PARA_ENTREGA";
 
+                // Buscar repartidor dinámicamente si no lo tenemos
+                if (deliveryAgent == null) {
+                    buscarAgentes();
+                }
+
                 // Notificar repartidor
                 if (deliveryAgent != null) {
                     ACLMessage delivery = new ACLMessage(ACLMessage.REQUEST);
@@ -229,8 +228,22 @@ public class GestorAgent extends Agent {
                     send(delivery);
 
                     System.out.println("🚚 " + getLocalName() + " - Enviado a repartidor para entrega");
+                } else {
+                    System.out.println("⚠️ " + getLocalName() + " - ¡No hay repartidor disponible!");
                 }
             }
+        }
+    }
+
+    private void handleRestaurantConfirmation(ACLMessage msg, String conversationId) {
+        OrderData order = orders.get(conversationId);
+        if (order != null) {
+            // Reenviar la confirmación al cliente
+            ACLMessage confirm = new ACLMessage(ACLMessage.CONFIRM);
+            confirm.addReceiver(new jade.core.AID(order.customerID, false));
+            confirm.setConversationId(conversationId);
+            confirm.setContent(msg.getContent());
+            send(confirm);
         }
     }
 
@@ -253,18 +266,14 @@ public class GestorAgent extends Agent {
 
     private double extractPrice(String content) {
         try {
-            String pricePart =
-                content.split("\\|")[0];
+            String pricePart = content.split("\\|")[0];
 
-            pricePart =
-                pricePart.replace(
+            pricePart = pricePart.replace(
                     "Precio: $",
-                    ""
-                );
+                    "");
 
             return Double.parseDouble(
-                pricePart.trim()
-            );
+                    pricePart.trim());
 
         } catch (Exception e) {
 

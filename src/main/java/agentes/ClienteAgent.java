@@ -1,4 +1,4 @@
-package agents;
+package agentes;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
@@ -24,74 +24,61 @@ public class ClienteAgent extends Agent {
 
         // Comportamiento para hacer pedido
         addBehaviour(new jade.core.behaviours.TickerBehaviour(this, 10000) {
-        
+
             @Override
             protected void onTick() {
-            
+
                 try {
-                
+
                     // Generar nuevo ID de orden
                     orderID = getLocalName() + "_" + System.currentTimeMillis();
 
-                    DFAgentDescription template =
-                            new DFAgentDescription();
+                    DFAgentDescription template = new DFAgentDescription();
 
-                    ServiceDescription sd =
-                            new ServiceDescription();
+                    ServiceDescription sd = new ServiceDescription();
 
                     sd.setType("gestor");
 
                     template.addServices(sd);
 
-                    DFAgentDescription[] result =
-                            DFService.search(myAgent, template);
+                    DFAgentDescription[] result = DFService.search(myAgent, template);
 
                     if (result.length > 0) {
-                    
-                        String selectedItem =
-                                menuItems[
-                                        (int) (Math.random()
-                                        * menuItems.length)
-                                ];
 
-                        ACLMessage msg =
-                                new ACLMessage(
-                                        ACLMessage.REQUEST
-                                );
+                        String selectedItem = menuItems[(int) (Math.random()
+                                * menuItems.length)];
+
+                        ACLMessage msg = new ACLMessage(
+                                ACLMessage.REQUEST);
 
                         msg.addReceiver(
-                                result[0].getName()
-                        );
+                                result[0].getName());
 
                         msg.setConversationId(
-                                orderID
-                        );
+                                orderID);
 
                         msg.setContent(
-                                selectedItem
-                        );
+                                selectedItem);
 
                         send(msg);
 
                         System.out.println(
                                 "\n🆕 "
-                                + getLocalName()
-                                + " realizó un nuevo pedido: "
-                                + selectedItem
-                                + " (Order ID: "
-                                + orderID
-                                + ")"
-                        );
+                                        + getLocalName()
+                                        + " realizó un nuevo pedido: "
+                                        + selectedItem
+                                        + " (Order ID: "
+                                        + orderID
+                                        + ")");
 
                         orderStatus.put(
                                 orderID,
-                                "PEDIDO_ENVIADO"
-                        );
+                                "PEDIDO_ENVIADO");
 
                     }
 
                 } catch (Exception e) {
-                
+
                     e.printStackTrace();
 
                 }
@@ -109,7 +96,11 @@ public class ClienteAgent extends Agent {
                 if (msg != null) {
                     String conversationId = msg.getConversationId();
 
-                    if (msg.getPerformative() == ACLMessage.INFORM) {
+                    if (msg.getPerformative() == ACLMessage.INFORM && msg.getContent().startsWith("Entregado")) {
+                        System.out.println("🎉 " + getLocalName() + " - Pedido recibido: " + msg.getContent());
+                        orderStatus.put(conversationId, "ENTREGADO");
+
+                    } else if (msg.getPerformative() == ACLMessage.INFORM) {
                         System.out.println("✅ " + getLocalName() + " recibió: " + msg.getContent());
                         orderStatus.put(conversationId, "ORDEN_CONFIRMADA");
 
@@ -132,9 +123,6 @@ public class ClienteAgent extends Agent {
                         System.out.println("🚚 " + getLocalName() + " - Entrega en progreso: " + msg.getContent());
                         orderStatus.put(conversationId, "EN_ENTREGA");
 
-                    } else if (msg.getPerformative() == ACLMessage.INFORM && msg.getContent().startsWith("Entregado")) {
-                        System.out.println("🎉 " + getLocalName() + " - Pedido recibido: " + msg.getContent());
-                        orderStatus.put(conversationId, "ENTREGADO");
                     }
                 } else {
                     block();

@@ -1,4 +1,4 @@
-package agents;
+package agentes;
 
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -167,32 +167,26 @@ public class RestauranteAgent extends Agent {
 
         try {
 
-            DFAgentDescription template =
-                new DFAgentDescription();
+            DFAgentDescription template = new DFAgentDescription();
 
-            ServiceDescription sd =
-                new ServiceDescription();
+            ServiceDescription sd = new ServiceDescription();
 
             sd.setType("gestor");
 
             template.addServices(sd);
 
-            DFAgentDescription[] result =
-                DFService.search(
+            DFAgentDescription[] result = DFService.search(
                     this,
-                    template
-                );
+                    template);
 
             if (result.length > 0) {
 
-                gestorAgent =
-                    result[0].getName();
+                gestorAgent = result[0].getName();
 
                 System.out.println(
-                    "✅ Gestor encontrado: "
-                    + gestorAgent
-                        .getLocalName()
-                );
+                        "✅ Gestor encontrado: "
+                                + gestorAgent
+                                        .getLocalName());
             }
 
         } catch (Exception e) {
